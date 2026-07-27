@@ -88,11 +88,11 @@
             dirLight.shadow.mapSize.height = 2048;
             scene.add(dirLight);
 
-            // Земля (трава без текстуры, просто цвет)
+            // Трава — абсолютно без текстуры, просто чистый темный цвет
             const floorGeometry = new THREE.PlaneGeometry(300, 300, 64, 64);
             const floorMaterial = new THREE.MeshStandardMaterial({
                 color: 0x141f16,
-                roughness: 0.8,
+                roughness: 0.9,
                 metalness: 0.1
             });
             const floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -108,31 +108,30 @@
         }
 
         function createParkEnvironment() {
-            // Загрузка текстуры для дороги (Texture pol.png)
-            const textureLoader = new THREE.TextureLoader();
+            // Дорожка (плитка) — вот сюда загружаем текстуру Texture pol.png
+            const pathGeo = new THREE.PlaneGeometry(6, 300, 32, 64);
             const pathMat = new THREE.MeshStandardMaterial({
-                color: 0x555555, // Резервный цвет
-                roughness: 0.8,
+                color: 0x555555,
+                roughness: 0.7,
                 metalness: 0.1
             });
 
+            const textureLoader = new THREE.TextureLoader();
             textureLoader.load(
                 'Texture pol.png',
                 (texture) => {
                     texture.wrapS = THREE.RepeatWrapping;
                     texture.wrapT = THREE.RepeatWrapping;
-                    texture.repeat.set(2, 80); // Повторение текстуры вдоль дороги
+                    texture.repeat.set(2, 80); // Повторение текстуры по дорожке
                     pathMat.map = texture;
                     pathMat.needsUpdate = true;
                 },
                 undefined,
                 (err) => {
-                    console.log('Не удалось загрузить Texture pol.png для дороги, используется цвет.', err);
+                    console.log('Не удалось загрузить Texture pol.png для плитки.', err);
                 }
             );
 
-            // Дорожка с текстурой
-            const pathGeo = new THREE.PlaneGeometry(6, 300);
             const path = new THREE.Mesh(pathGeo, pathMat);
             path.rotation.x = -Math.PI / 2;
             path.position.y = 0.01;
@@ -286,7 +285,6 @@
             const delta = (time - prevTime) / 1000;
 
             if (document.pointerLockElement === document.body) {
-                // Еще более плавная и спокойная скорость (ходьба: 1.8, бег: 3.2)
                 const speed = isRunning ? 3.2 : 1.8;
 
                 velocity.x -= velocity.x * 10.0 * delta;
