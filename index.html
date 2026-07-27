@@ -88,7 +88,7 @@
             dirLight.shadow.mapSize.height = 2048;
             scene.add(dirLight);
 
-            // Земля без текстуры (просто темный цвет парка)
+            // Земля (трава без текстуры, просто цвет)
             const floorGeometry = new THREE.PlaneGeometry(300, 300, 64, 64);
             const floorMaterial = new THREE.MeshStandardMaterial({
                 color: 0x141f16,
@@ -108,8 +108,31 @@
         }
 
         function createParkEnvironment() {
+            // Загрузка текстуры для дороги (Texture pol.png)
+            const textureLoader = new THREE.TextureLoader();
+            const pathMat = new THREE.MeshStandardMaterial({
+                color: 0x555555, // Резервный цвет
+                roughness: 0.8,
+                metalness: 0.1
+            });
+
+            textureLoader.load(
+                'Texture pol.png',
+                (texture) => {
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.repeat.set(2, 80); // Повторение текстуры вдоль дороги
+                    pathMat.map = texture;
+                    pathMat.needsUpdate = true;
+                },
+                undefined,
+                (err) => {
+                    console.log('Не удалось загрузить Texture pol.png для дороги, используется цвет.', err);
+                }
+            );
+
+            // Дорожка с текстурой
             const pathGeo = new THREE.PlaneGeometry(6, 300);
-            const pathMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.9 });
             const path = new THREE.Mesh(pathGeo, pathMat);
             path.rotation.x = -Math.PI / 2;
             path.position.y = 0.01;
@@ -263,8 +286,8 @@
             const delta = (time - prevTime) / 1000;
 
             if (document.pointerLockElement === document.body) {
-                // Уменьшенная скорость: ходьба 2.5, бег 4.5
-                const speed = isRunning ? 4.5 : 2.5;
+                // Еще более плавная и спокойная скорость (ходьба: 1.8, бег: 3.2)
+                const speed = isRunning ? 3.2 : 1.8;
 
                 velocity.x -= velocity.x * 10.0 * delta;
                 velocity.z -= velocity.z * 10.0 * delta;
@@ -317,8 +340,8 @@
 
                 const isMoving = moveForward || moveBackward || moveLeft || moveRight;
                 if (isMoving) {
-                    const freq = isRunning ? 16 : 10;
-                    const ampVert = isRunning ? 0.12 : 0.06;
+                    const freq = isRunning ? 14 : 9;
+                    const ampVert = isRunning ? 0.10 : 0.05;
                     walkTimer += delta * freq;
                     camera.position.y = cameraOriginalY + Math.sin(walkTimer) * ampVert;
                 } else {
