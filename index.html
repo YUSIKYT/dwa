@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Прогулка под дождем (С коллизией деревьев)</title>
+    <title>3D Прогулка под дождем (С текстурой пола)</title>
     <style>
         body {
             margin: 0;
@@ -52,8 +52,6 @@
         const cameraOriginalY = 1.7;
 
         let yawObject, pitchObject;
-        
-        // НОВИНКА: Массив для хранения позиций и радиусов деревьев (для коллизий)
         const trees = [];
 
         init();
@@ -90,10 +88,30 @@
             dirLight.shadow.mapSize.height = 2048;
             scene.add(dirLight);
 
+            // Загрузка текстуры пола (Texture pol.png)
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load(
+                'Texture pol.png',
+                (texture) => {
+                    // Настраиваем повторение текстуры, чтобы она не растягивалась на весь огромный пол
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.repeat.set(40, 40); // Количество повторений по ширине и длине
+
+                    floorMaterial.map = texture;
+                    floorMaterial.needsUpdate = true;
+                },
+                undefined,
+                (err) => {
+                    console.log('Не удалось загрузить Texture pol.png, используется стандартный цвет.', err);
+                }
+            );
+
+            // Земля с текстурой пола
             const floorGeometry = new THREE.PlaneGeometry(300, 300, 64, 64);
             const floorMaterial = new THREE.MeshStandardMaterial({
-                color: 0x111e14,
-                roughness: 0.8,
+                color: 0x222222, // Резервный цвет, пока текстура грузится
+                roughness: 0.7,
                 metalness: 0.1
             });
             const floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -152,11 +170,10 @@
             treeGroup.position.set(finalX, 0, finalZ);
             scene.add(treeGroup);
 
-            // Сохраняем позицию и радиус ствола для проверки столкновений
             trees.push({
                 x: finalX,
                 z: finalZ,
-                radius: 1.1 // Радиус коллизии вокруг ствола
+                radius: 1.1
             });
         }
 
@@ -283,11 +300,9 @@
                 const moveX = cameraDirection.x * velocity.z + cameraDirection.z * velocity.x;
                 const moveZ = cameraDirection.z * velocity.z - cameraDirection.x * velocity.x;
 
-                // Проверяем коллизии перед смещением позиции
                 const newX = yawObject.position.x + moveX * delta;
                 const newZ = yawObject.position.z + moveZ * delta;
 
-                // Радиус игрока (чтобы не врезаться краем камеры)
                 const playerRadius = 0.4;
                 let canMoveX = true;
                 let canMoveZ = true;
@@ -295,14 +310,12 @@
                 for (let i = 0; i < trees.length; i++) {
                     const tree = trees[i];
                     
-                    // Проверка коллизии по оси X
                     const distX = Math.abs(newX - tree.x);
                     const distZ = Math.abs(yawObject.position.z - tree.z);
                     if (distX < (tree.radius + playerRadius) && distZ < (tree.radius + playerRadius)) {
                         canMoveX = false;
                     }
 
-                    // Проверка коллизии по оси Z
                     const distX2 = Math.abs(yawObject.position.x - tree.x);
                     const distZ2 = Math.abs(newZ - tree.z);
                     if (distX2 < (tree.radius + playerRadius) && distZ2 < (tree.radius + playerRadius)) {
@@ -310,7 +323,6 @@
                     }
                 }
 
-                // Применяем движение с учетом препятствий
                 if (canMoveX) {
                     yawObject.position.x = newX;
                 }
@@ -318,7 +330,6 @@
                     yawObject.position.z = newZ;
                 }
 
-                // Ограничение по границам парка
                 yawObject.position.x = Math.max(-15, Math.min(15, yawObject.position.x));
                 yawObject.position.z = Math.max(-145, Math.min(145, yawObject.position.z));
 
